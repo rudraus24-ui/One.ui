@@ -3,206 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Happy Birthday! 🎂 Neon Celebration</title>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800;900&family=Poppins:wght@300;400;600;700&family=Sacramento&display=swap" rel="stylesheet">
+    <title>Happy Birthday Didi ❤️</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Particle Background Canvas -->
-    <canvas id="bgCanvas"></canvas>
+    <div class="background"></div>
 
-    <!-- Top Sound Controls -->
-    <div class="top-bar">
-        <button class="bgm-btn" id="bgmToggle">
-            <i class="fa-solid fa-music"></i> <span id="bgmState">BGM: OFF</span>
+    <div class="card">
+
+        <h1>HAPPY</h1>
+
+        <h2>BIRTHDAY DIDI ❤️</h2>
+
+        <p id="message">
+            Click the button below for your surprise...
+        </p>
+
+        <button id="openBtn">
+            🎁 OPEN SURPRISE
         </button>
-    </div>
 
-    <!-- Main Container -->
-    <div class="main-content">
-
-        <!-- PAGE 1: HOME / COUNTDOWN -->
-        <div class="page active" id="page1">
-            <div class="hero-section glass-card">
-                <h2 class="neon-title">Happy Birthday</h2>
-                <div class="bday-name" id="userName">BRO</div>
-                <p class="neon-subtitle">✨ Wishing You A Glowing & Spectacular Year Ahead ✨</p>
-
-                <div class="countdown-container">
-                    <div class="time-box">
-                        <div class="time-number" id="days">00</div>
-                        <div class="time-label">Days</div>
-                    </div>
-                    <div class="time-box">
-                        <div class="time-number" id="hours">00</div>
-                        <div class="time-label">Hours</div>
-                    </div>
-                    <div class="time-box">
-                        <div class="time-number" id="minutes">00</div>
-                        <div class="time-label">Minutes</div>
-                    </div>
-                    <div class="time-box">
-                        <div class="time-number" id="seconds">00</div>
-                        <div class="time-label">Seconds</div>
-                    </div>
-                </div>
-
-                <button class="action-btn" onclick="switchPage('page3')">
-                    <i class="fa-solid fa-cake-candles"></i> Cut The Cake!
-                </button>
-            </div>
+        <div id="gift">
+            🎁
         </div>
 
-        <!-- PAGE 2: MEMORIES GALLERY -->
-        <div class="page" id="page2">
-            <h2 class="neon-title">Memory Lane</h2>
-            <p class="neon-subtitle">📸 Golden Moments & Unforgettable Memories</p>
-
-            <div class="gallery-grid">
-                <div class="photo-card">
-                    <div class="photo-frame" style="background-image: linear-gradient(135deg, #12002b, #3f005c);">
-                        <i class="fa-solid fa-camera-retro"></i>
-                    </div>
-                    <div class="photo-caption">Crazy Adventures 🎉</div>
-                </div>
-                <div class="photo-card">
-                    <div class="photo-frame" style="background-image: linear-gradient(135deg, #001f3f, #0074D9);">
-                        <i class="fa-solid fa-face-smile-beam"></i>
-                    </div>
-                    <div class="photo-caption">Unstoppable Laughter 😂</div>
-                </div>
-                <div class="photo-card">
-                    <div class="photo-frame" style="background-image: linear-gradient(135deg, #3D9970, #111);">
-                        <i class="fa-solid fa-champagne-glasses"></i>
-                    </div>
-                    <div class="photo-caption">Late Night Parties 🥳</div>
-                </div>
-                <div class="photo-card">
-                    <div class="photo-frame" style="background-image: linear-gradient(135deg, #85144b, #FF4136);">
-                        <i class="fa-solid fa-star"></i>
-                    </div>
-                    <div class="photo-caption">Achieving Milestones 🚀</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGE 3: CAKE CUTTING -->
-        <div class="page" id="page3">
-            <h2 class="neon-title">Make A Wish</h2>
-            <p class="neon-subtitle">🎂 Click the candle flame to blow it out!</p>
-
-            <div class="glass-card cake-container">
-                <div class="cake">
-                    <div class="plate"></div>
-                    <div class="layer layer-bottom"></div>
-                    <div class="layer layer-middle"></div>
-                    <div class="layer layer-top"></div>
-                    <div class="candle">
-                        <div class="flame" id="candleFlame" onclick="blowCandle()"></div>
-                    </div>
-                </div>
-
-                <div class="cake-status" id="cakeStatus">
-                    🔥 Candle is burning... Click to blow it!
-                </div>
-
-                <button class="action-btn" id="cutCakeBtn" style="display:none; margin-top:25px;" onclick="triggerFireworks()">
-                    🎉 Celebrate & Blast Fireworks!
-                </button>
-            </div>
-        </div>
-
-        <!-- PAGE 4: WISH WALL -->
-        <div class="page" id="page4">
-            <h2 class="neon-title">Wish Wall</h2>
-            <p class="neon-subtitle">💌 Special Birthday Messages From Loved Ones</p>
-
-            <div class="wish-grid" id="wishGrid">
-                <div class="wish-card">
-                    <div class="wish-author"><i class="fa-solid fa-heart"></i> Bestie</div>
-                    <div class="wish-text">May your birthday be as bright and glowing as your neon spirit! Keep shining bro! ✨</div>
-                </div>
-                <div class="wish-card">
-                    <div class="wish-author"><i class="fa-solid fa-crown"></i> Family</div>
-                    <div class="wish-text">Wishing you endless success, good health, and infinite happiness today & forever! ❤️</div>
-                </div>
-                <div class="wish-card">
-                    <div class="wish-author"><i class="fa-solid fa-bolt"></i> Squad</div>
-                    <div class="wish-text">Party time! Let's make this year the most epic one yet! 🚀🔥</div>
-                </div>
-            </div>
-
-            <!-- Add Wish Form -->
-            <div class="glass-card" style="margin-top: 30px;">
-                <h3 style="color:var(--neon-blue); margin-bottom:15px;"><i class="fa-solid fa-pen"></i> Leave a Wish</h3>
-                <div class="add-wish-box">
-                    <input type="text" id="senderName" placeholder="Your Name">
-                    <textarea id="senderMsg" rows="3" placeholder="Write a neon birthday message..."></textarea>
-                    <button class="action-btn" style="padding: 10px 25px; font-size:14px;" onclick="addWish()">Post Wish</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGE 5: GIFT UNBOXING GAME -->
-        <div class="page" id="page5">
-            <h2 class="neon-title">Gift Vault</h2>
-            <p class="neon-subtitle">🎁 Click on any gift box to unlock your surprise!</p>
-
-            <div class="gifts-grid">
-                <div class="gift-box" onclick="openGift('🎁 Golden Surprise', 'You unlocked an unlimited pass to good vibes, epic adventures, and lifetime happiness! 🌟')">
-                    <i class="fa-solid fa-gift"></i>
-                    <div class="gift-title">Box #1</div>
-                </div>
-                <div class="gift-box" onclick="openGift('👑 King / Queen Coupon', 'Redeemable for 1 FREE Treat & Royal VIP treatment anytime you ask! 🍕🥂')">
-                    <i class="fa-solid fa-box-open"></i>
-                    <div class="gift-title">Box #2</div>
-                </div>
-                <div class="gift-box" onclick="openGift('⚡ Secret Wish', 'May all your dreams convert into reality faster than light speed! Keep hustling & rock on! ⚡')">
-                    <i class="fa-solid fa-gem"></i>
-                    <div class="gift-title">Box #3</div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Bottom Navigation Bar -->
-    <div class="navbar">
-        <button class="nav-btn active" onclick="switchPage('page1', this)">
-            <i class="fa-solid fa-house"></i>
-            <span>Home</span>
-        </button>
-        <button class="nav-btn" onclick="switchPage('page2', this)">
-            <i class="fa-solid fa-images"></i>
-            <span>Gallery</span>
-        </button>
-        <button class="nav-btn" onclick="switchPage('page3', this)">
-            <i class="fa-solid fa-cake-candles"></i>
-            <span>Cake</span>
-        </button>
-        <button class="nav-btn" onclick="switchPage('page4', this)">
-            <i class="fa-solid fa-envelope-open-text"></i>
-            <span>Wishes</span>
-        </button>
-        <button class="nav-btn" onclick="switchPage('page5', this)">
-            <i class="fa-solid fa-gift"></i>
-            <span>Gifts</span>
-        </button>
-    </div>
-
-    <!-- Gift Unboxing Modal -->
-    <div class="modal-overlay" id="giftModal">
-        <div class="modal-card">
-            <h3 id="modalTitle">Gift Unlocked!</h3>
-            <p id="modalBody">Surprise message here!</p>
-            <button class="close-btn" onclick="closeModal()">Awesome!</button>
-        </div>
     </div>
 
     <script src="script.js"></script>
+
 </body>
 </html>
