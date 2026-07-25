@@ -53,7 +53,21 @@
       min-height: 24px;
     }
     /* Bottom Timer Box */
-    
+    .timer-box {
+      position: absolute;
+      bottom: 5%;
+      width: 100%;
+      text-align: center;
+      z-index: 10;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      letter-spacing: 1px;
+      font-family: monospace;
+    }
+    .timer-box span {
+      color: #ff69b4;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -84,7 +98,7 @@
 
     // Exact Text Lines from Video
     const wishes = [
-      "Hey you 💕❤️‍🔥",
+      "Hey you 💕",
       "Happy Birthday 🌸",
       "May God bless you 🎈",
       "And give u many happiness 💖",
@@ -216,7 +230,20 @@
       }
     }
 
-    
+    // Live Timer Functionality
+    let totalSecs = 77 * 86400 + 8 * 3600 + 6 * 60 + 14;
+    setInterval(() => {
+      totalSecs++;
+      const d = Math.floor(totalSecs / 86400);
+      const h = Math.floor((totalSecs % 86400) / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = totalSecs % 60;
+
+      document.getElementById('days').textContent = String(d).padStart(3, '0');
+      document.getElementById('hours').textContent = String(h).padStart(2, '0');
+      document.getElementById('minutes').textContent = String(m).padStart(2, '0');
+      document.getElementById('seconds').textContent = String(s).padStart(2, '0');
+    }, 1000);
 
     // Start Tree Growth
     drawBranch(startX, startY, 110, 0, 14, 0);
@@ -226,4 +253,5 @@
   </script>
 </body>
 </html>
+
 
