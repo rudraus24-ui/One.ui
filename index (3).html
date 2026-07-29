@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liza Universe</title>
+
+    <!-- Google Fonts for Ultra-Luxury Apple/Disney Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS File Link -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Ambient Floating Background Elements (Clouds, Light Rays, Petals, Canvas Particles) -->
+    <div class="ambient-background">
+        <div class="light-ray light-ray-1"></div>
+        <div class="light-ray light-ray-2"></div>
+        <div class="cloud-layer cloud-layer-1"></div>
+        <div class="cloud-layer cloud-layer-2"></div>
+        <canvas id="particleCanvas"></canvas>
+        <div id="butterflyContainer" class="butterfly-container"></div>
+        <div id="petalContainer" class="petal-container"></div>
+    </div>
+
+    <!-- Mouse / Touch Particle Sparkle Overlay Canvas -->
+    <canvas id="sparkleCanvas"></canvas>
+
+    <!-- Background Audio Element -->
+    <audio id="bgMusic" src="assets/music.mp3" loop preload="auto"></audio>
+
+    <!-- Main Mobile Container Viewport -->
+    <main class="app-viewport">
+
+        <!-- =========================================================
+             SECTION 1: PRELOADER SCREEN
+        ========================================================= -->
+        <section id="sceneLoader" class="scene active">
+            <div class="glass-card loader-card">
+                <div class="loader-logo">
+                    <span class="sparkle-icon">✨</span>
+                    <h1 class="brand-title">Liza Universe</h1>
+                </div>
+                <div class="luxury-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-core"></div>
+                </div>
+                <p class="loader-text" data-i18n="loading">Preparing Magical Experience...</p>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 2: LANGUAGE SELECTION SCREEN
+        ========================================================= -->
+        <section id="sceneLang" class="scene">
+            <div class="glass-card lang-card">
+                <div class="card-badge" data-i18n="badgeWelcome">Welcome</div>
+                <h2 class="card-heading" data-i18n="chooseLanguageTitle">Choose Language</h2>
+                <p class="card-subheading" data-i18n="chooseLanguageSub">Select your preferred language to begin</p>
+
+                <div class="lang-grid">
+                    <button class="liquid-btn lang-btn" onclick="selectLanguage('en')">
+                        <span class="flag">🇮🇳</span>
+                        <span class="btn-text">English</span>
+                        <div class="glass-reflection"></div>
+                    </button>
+                    <button class="liquid-btn lang-btn" onclick="selectLanguage('ru')">
+                        <span class="flag">🇷🇺</span>
+                        <span class="btn-text">Русский</span>
+                        <div class="glass-reflection"></div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 3: BEST FRIEND QUESTION SCREEN
+        ========================================================= -->
+        <section id="sceneFriend" class="scene">
+            <div class="glass-card 3d-card" id="friendCard">
+                <div class="card-icon">👑</div>
+                <h2 class="card-heading" data-i18n="friendQuestionTitle">Who is your Best Friend?</h2>
+                <p class="card-subheading" data-i18n="friendQuestionSub">Type the correct name below to unlock</p>
+
+                <div class="input-group">
+                    <input type="text" id="friendInput" class="glass-input" placeholder="Enter name..." autocomplete="off" spellcheck="false">
+                    <div class="input-highlight"></div>
+                </div>
+
+                <div id="friendHint" class="hint-box"></div>
+
+                <button id="friendSubmitBtn" class="liquid-btn primary-btn" onclick="checkBestFriend()">
+                    <span class="btn-text" data-i18n="submitBtn">Submit Answer</span>
+                    <div class="glass-reflection"></div>
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 4: FUNNY QUESTION SCREEN (EVASIVE "NO" BUTTON)
+        ========================================================= -->
+        <section id="scenePictureQuestion" class="scene">
+            <div class="glass-card 3d-card" id="pictureQuestionCard">
+                <div class="card-icon">👀</div>
+                <h2 class="card-heading" data-i18n="seePicQuestionTitle">Can You See Our Picture?</h2>
+                <p class="card-subheading" data-i18n="seePicQuestionSub">Make your choice to continue</p>
+
+                <div class="playful-btn-container" id="evasiveContainer">
+                    <button class="liquid-btn yes-btn" onclick="acceptPictureView()">
+                        <span class="btn-text" data-i18n="yesBtn">YES</span>
+                        <div class="glass-reflection"></div>
+                    </button>
+                    <button id="noBtn" class="liquid-btn no-btn">
+                        <span class="btn-text" data-i18n="noBtn">NO</span>
+                        <div class="glass-reflection"></div>
+                    </button>
+                </div>
+
+                <div id="noTauntText" class="taunt-box"></div>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 5 & 6: CINEMATIC REVEAL & PHOTO SCENE
+        ========================================================= -->
+        <section id="scenePhoto" class="scene">
+            <div class="cloud-curtain curtain-left" id="curtainLeft"></div>
+            <div class="cloud-curtain curtain-right" id="curtainRight"></div>
+
+            <div class="photo-reveal-wrapper" id="photoRevealWrapper">
+                <div class="glass-photo-frame 3d-card" id="photoFrame">
+                    <div class="frame-reflection-shine"></div>
+                    <div class="frame-corner corner-tl"></div>
+                    <div class="frame-corner corner-tr"></div>
+                    <div class="frame-corner corner-bl"></div>
+                    <div class="frame-corner corner-br"></div>
+                    
+                    <div class="photo-container">
+                        <img src="assets/liza.jpg" alt="Liza" class="luxury-photo" id="lizaPhoto">
+                        <div class="photo-shimmer"></div>
+                    </div>
+                </div>
+
+                <button class="liquid-btn primary-btn continue-btn" onclick="goToFinalScene()">
+                    <span class="btn-text" data-i18n="continueBtn">Continue Journey ✨</span>
+                    <div class="glass-reflection"></div>
+                </button>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SECTION 8: FINAL SCENE
+        ========================================================= -->
+        <section id="sceneFinal" class="scene">
+            <div class="glass-card finale-card 3d-card">
+                <div class="finale-sparkle">✨</div>
+                <h2 class="finale-line-1" data-i18n="finalLine1">One Picture...</h2>
+                <h1 class="finale-line-2" data-i18n="finalLine2">Thousands Of Memories.</h1>
+                
+                <div class="finale-divider">
+                    <span class="divider-line"></span>
+                    <span class="divider-flower">🌸</span>
+                    <span class="divider-line"></span>
+                </div>
+
+                <h3 class="finale-for" data-i18n="finalFor">For Liza 🌸</h3>
+                <p class="finale-author" data-i18n="finalAuthor">— Rudra</p>
+
+                <button class="liquid-btn replay-btn" onclick="restartJourney()">
+                    <span class="btn-text" data-i18n="replayBtn">Replay Experience 🔄</span>
+                    <div class="glass-reflection"></div>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+<script src="script.js"></script>
+
+</html>
