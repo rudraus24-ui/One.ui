@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ULTRON // AI CORE - 3D Holographic Robot</title>
+    <!-- Tailwind CSS for modern responsive utility layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- MediaPipe Vision Tasks for Hand Landmark Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/vision_bundle.js" crossorigin="anonymous"></script>
+    <!-- FontAwesome for futuristic icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Orbitron & Share Tech Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #020617;
+            color: #facc15;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(250, 204, 21, 0.25);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+        }
+        .glow-yellow {
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.7), 0 0 20px rgba(250, 204, 21, 0.4);
+        }
+        .glow-box {
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.25);
+        }
+        /* Scanline effect */
+        .scanlines {
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(2, 6, 23, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(250, 204, 21, 0.4); border-radius: 2px; }
+    </style>
+</head>
+<body class="w-screen h-screen relative">
+
+    <!-- START SCREEN / PERMISSION OVERLAY -->
+    <div id="start-overlay" class="fixed inset-0 z-50 bg-[#020617] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-700">
+        <div class="max-w-md w-full glass-panel p-8 rounded-xl border border-yellow-400/40 relative overflow-hidden glow-box">
+            <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-transparent to-yellow-500/10 animate-pulse"></div>
+            <div class="text-3xl font-extrabold tracking-widest text-yellow-400 font-orbitron mb-2 glow-yellow">ULTRON // AI</div>
+            <div class="text-xs text-yellow-600 tracking-wider mb-6">HOLOGRAPHIC INTERACTIVE INTERFACE</div>
+            
+            <p class="text-sm text-slate-300 mb-6 font-mono leading-relaxed">
+                Camera permission is required for hand gesture control (pinch to zoom, open palm to rotate, fist to freeze). All processing is done 100% locally on your device.
+            </p>
+
+            <div id="error-msg" class="text-xs text-red-400 mb-4 hidden font-mono"></div>
+
+            <button id="btn-start" class="w-full py-4 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400 text-yellow-300 font-orbitron font-bold tracking-widest rounded transition-all duration-300 shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                START HOLOGRAM
+            </button>
+            <div class="mt-4 text-[10px] text-slate-500 uppercase tracking-widest">CAMERA PROCESSING: LOCAL</div>
+        </div>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 z-40 bg-[#020617] flex flex-col items-center justify-center p-6 text-center hidden opacity-0 transition-opacity duration-700">
+        <div class="max-w-md w-full glass-panel p-8 rounded-xl border border-yellow-400/30 relative overflow-hidden">
+            <div class="text-2xl font-extrabold tracking-widest text-yellow-400 font-orbitron mb-2 glow-yellow">ULTRON // AI CORE</div>
+            <div id="loading-status" class="text-xs text-slate-300 mb-6 h-6 font-mono">INITIALIZING AI CORE...</div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-yellow-500/30">
+                <div id="loading-bar" class="bg-yellow-400 h-full w-0 transition-all duration-300 shadow-[0_0_12px_#facc15]"></div>
+            </div>
+            <div class="mt-4 flex justify-between text-[10px] text-slate-500 uppercase tracking-widest">
+                <span>LOCAL NEURAL NET</span>
+                <span id="loading-pct">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D CANVAS CONTAINER -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- SCANLINES OVERLAY -->
+    <div class="absolute inset-0 z-10 scanlines"></div>
+
+    <!-- HUD OVERLAY -->
+    <div id="hud-container" class="absolute inset-0 z-20 pointer-events-none flex flex-col justify-between p-4 md:p-6 hidden">
+        
+        <!-- TOP HEADER -->
+        <header class="flex justify-between items-center pointer-events-auto">
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
+                <h1 class="text-xl md:text-2xl font-extrabold tracking-widest text-yellow-400 font-orbitron glow-yellow">ULTRON // AI CORE</h1>
+                <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] bg-yellow-950/80 border border-yellow-500/40 text-yellow-300 rounded font-mono">v9.2</span>
+            </div>
+
+            <div class="text-center absolute left-1/2 -translate-x-1/2 hidden md:block">
+                <h2 class="text-sm font-bold tracking-wider text-slate-200 font-orbitron">HOLOGRAPHIC AI</h2>
+                <div class="text-[10px] text-yellow-400 tracking-widest uppercase opacity-80">GESTURE CONTROL ACTIVE</div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="flex items-center space-x-2 px-3 py-1 rounded-full glass-panel border border-emerald-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-semibold tracking-wider text-emerald-400">● HOLOGRAM ONLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- CENTER INSTRUCTION PANEL / GESTURE NOTICE -->
+        <div class="absolute top-20 left-1/2 -translate-x-1/2 glass-panel px-4 py-2 rounded-lg border border-yellow-500/30 text-center pointer-events-auto hidden md:block shadow-lg">
+            <div class="text-[11px] font-mono text-yellow-300 space-x-3 flex items-center justify-center">
+                <span>🤏 Pinch → Zoom</span>
+                <span>•</span>
+                <span>👋 Hand → Rotate</span>
+                <span>•</span>
+                <span>✊ Fist → Freeze</span>
+            </div>
+        </div>
+
+        <!-- MIDDLE / BOTTOM PANELS -->
+        <div class="flex flex-col md:flex-row justify-between items-end pointer-events-auto gap-4">
+            
+            <!-- BOTTOM-LEFT TELEMETRY PANEL -->
+            <div class="glass-panel p-4 rounded-lg w-72 space-y-2 border border-yellow-500/20 text-xs font-mono">
+                <div class="flex justify-between items-center pb-2 border-b border-yellow-500/20">
+                    <span class="font-bold tracking-wider text-yellow-300 font-orbitron">CORE TELEMETRY</span>
+                    <i class="fa-solid fa-microchip text-yellow-400 text-xs"></i>
+                </div>
+                <div class="flex justify-between"><span class="text-slate-400">CAMERA:</span> <span id="hud-cam" class="text-emerald-400 font-bold">ACTIVE</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">HAND:</span> <span id="hud-hand" class="text-yellow-400 font-bold">SEARCHING...</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">GESTURE:</span> <span id="hud-gesture" class="text-cyan-300 font-bold">NONE</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">ZOOM:</span> <span id="hud-zoom" class="text-yellow-400 font-bold">50%</span></div>
+            </div>
+
+            <!-- CAMERA PREVIEW WINDOW (BOTTOM LEFT / CENTER MOBILE) -->
+            <div class="flex flex-col items-center space-y-2">
+                <div class="relative w-36 h-28 glass-panel rounded-lg overflow-hidden border border-yellow-500/40 shadow-xl" id="cam-preview-box">
+                    <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover -scale-x-100 opacity-80"></video>
+                    <div class="absolute top-1 left-1 px-1.5 py-0.5 bg-black/60 rounded text-[8px] text-emerald-400 font-mono flex items-center space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>CAM ACTIVE</span>
+                    </div>
+                </div>
+                <button id="btn-toggle-cam" class="px-3 py-1 bg-slate-900/80 hover:bg-yellow-950/50 border border-yellow-500/30 rounded text-[11px] text-yellow-300 font-mono transition-all">
+                    HIDE CAMERA
+                </button>
+            </div>
+
+            <!-- BOTTOM-RIGHT STATUS PANEL -->
+            <div class="glass-panel p-4 rounded-lg w-72 space-y-2 border border-yellow-500/20 text-xs font-mono hidden sm:block">
+                <div class="flex justify-between items-center pb-2 border-b border-yellow-500/20">
+                    <span class="font-bold tracking-wider text-yellow-300 font-orbitron">SYSTEM STATUS</span>
+                    <i class="fa-solid fa-shield-halved text-yellow-400 text-xs"></i>
+                </div>
+                <div class="flex justify-between"><span class="text-slate-400">STATUS:</span> <span class="text-emerald-400 font-bold">ONLINE</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">SIGNAL:</span> <span class="text-yellow-400 font-bold">98%</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">TRACKING:</span> <span class="text-emerald-400 font-bold">ACTIVE (LOCAL)</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">FPS:</span> <span id="hud-fps" class="text-cyan-400 font-bold">60</span></div>
+            </div>
+        </div>
+
+        <!-- BOTTOM FOOTER CONTROLS -->
+        <footer class="flex justify-between items-center pt-3 border-t border-yellow-500/10 pointer-events-auto">
+            <div class="text-[10px] text-slate-400 tracking-wider">
+                CAMERA PROCESSING: <span class="text-yellow-400 font-bold">LOCAL</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="btn-reset" class="px-3 py-1.5 rounded bg-slate-900/80 hover:bg-yellow-950/80 border border-yellow-500/30 text-xs text-yellow-300 font-mono transition-all flex items-center space-x-1.5">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>RESET VIEW</span>
+                </button>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script>
+        // --- APPLICATION STATE ---
+        let scene, camera, renderer, controls;
+        let robotGroup, holoPlatform;
+        let particleSystem;
+        let handLandmarker = undefined;
+        let webcamRunning = false;
+        let videoElement = document.getElementById('webcam');
+        let lastVideoTime = -1;
+        let fpsTimer = 0;
+        let frameCount = 0;
+
+        // Interaction parameters with smoothing (Lerp)
+        const ZOOM_SENSITIVITY = 3.0;
+        let targetCameraZ = 12;
+        let currentCameraZ = 12;
+        let targetRotationY = 0;
+        let currentRotationY = 0;
+        let isFrozen = false;
+        let currentGesture = "NONE";
+        let handDetectedStatus = false;
+        let camPreviewVisible = true;
+
+        // --- LOADING SEQUENCE & INITIALIZATION ---
+        const startOverlay = document.getElementById('start-overlay');
+        const loadingScreen = document.getElementById('loading-screen');
+        const hudContainer = document.getElementById('hud-container');
+        const errorMsg = document.getElementById('error-msg');
+        const btnStart = document.getElementById('btn-start');
+
+        btnStart.addEventListener('click', async () => {
+            btnStart.disabled = true;
+            btnStart.textContent = "REQUESTING PERMISSION...";
+            
+            try {
+                // Check HTTPS or localhost requirement
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    throw new Error("Camera access requires HTTPS connection or localhost.");
+                }
+
+                // Request camera stream
+                const constraints = { video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" } };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = stream;
+                await videoElement.play();
+                webcamRunning = true;
+
+                // Transition to loading screen
+                startOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    startOverlay.style.display = 'none';
+                    loadingScreen.style.display = 'flex';
+                    setTimeout(() => loadingScreen.style.opacity = '1', 50);
+                    runLoadingSequence();
+                }, 700);
+
+            } catch (err) {
+                console.error(err);
+                btnStart.disabled = false;
+                btnStart.textContent = "START HOLOGRAM";
+                errorMsg.textContent = "Camera access denied or unavailable. Enable camera permission to use gesture zoom.";
+                errorMsg.classList.remove('hidden');
+            }
+        });
+
+        async function runLoadingSequence() {
+            const steps = [
+                { text: "INITIALIZING AI CORE...", pct: 20 },
+                { text: "LOADING 3D ROBOT GEOMETRY...", pct: 50 },
+                { text: "INITIALIZING HAND TRACKING (MEDIAPIPE)...", pct: 80 },
+                { text: "SYSTEM READY", pct: 100 }
+            ];
+
+            const statusEl = document.getElementById('loading-status');
+            const barEl = document.getElementById('loading-bar');
+            const pctEl = document.getElementById('loading-pct');
+
+            for (let i = 0; i < steps.length; i++) {
+                statusEl.textContent = steps[i].text;
+                barEl.style.width = steps[i].pct + '%';
+                pctEl.textContent = steps[i].pct + '%';
+                
+                if (i === 2) {
+                    await initMediaPipe();
+                } else {
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+
+            // Finish loading and show experience
+            setTimeout(() => {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    hudContainer.classList.remove('hidden');
+                    initThreeJS();
+                    animate();
+                }, 700);
+            }, 500);
+        }
+
+        // --- MEDIAPIPE HAND LANDMARKER INITIALIZATION ---
+        async function initMediaPipe() {
+            try {
+                const vision = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+                );
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                        delegate: "GPU"
+                    },
+                    runningMode: "VIDEO",
+                    numHands: 1
+                });
+            } catch (e) {
+                console.warn("MediaPipe model load warning, falling back to mouse/touch interaction only:", e);
+            }
+        }
+
+        // --- THREE.JS 3D SCENE SETUP ---
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020617, 0.02);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, targetCameraZ);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Orbit controls fallback for mouse/touch drag
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 6;
+            controls.maxDistance = 22;
+            controls.enableRotate = false; // Hand/mouse custom logic overrides rotation
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffea00, 0.8);
+            scene.add(ambientLight);
+
+            const pointLight = new THREE.PointLight(0xfacc15, 2, 50);
+            pointLight.position.set(0, 5, 5);
+            scene.add(pointLight);
+
+            const blueRimLight = new THREE.DirectionalLight(0x38bdf8, 1.5);
+            blueRimLight.position.set(-5, 5, -5);
+            scene.add(blueRimLight);
+
+            // Build Holographic Robot & Platform
+            buildHologramRobot();
+
+            // Window resize handler
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- PROCEDURAL 3D ROBOTIC HUMANOID HOLOGRAM ---
+        function buildHologramRobot() {
+            robotGroup = new THREE.Group();
+            scene.add(robotGroup);
+
+            // Holographic Glass Neon Yellow Material
+            const holoMaterial = new THREE.MeshPhysicalMaterial({
+                color: 0xfacc15,
+                emissive: 0xca8a04,
+                emissiveIntensity: 0.6,
+                roughness: 0.2,
+                metalness: 0.8,
+                transparent: true,
+                opacity: 0.85,
+                wireframe: false,
+                side: THREE.DoubleSide
+            });
+
+            // Wireframe overlay material
+            const wireMaterial = new THREE.MeshBasicMaterial({
+                color: 0xfef08a,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.35
+            });
+
+            // Head
+            const headGeo = new THREE.SphereGeometry(0.5, 32, 32);
+            const headMesh = new THREE.Mesh(headGeo, holoMaterial);
+            headMesh.position.y = 2.2;
+            headMesh.add(new THREE.Mesh(headGeo, wireMaterial));
+            robotGroup.add(headMesh);
+
+            // Glowing visor / eyes
+            const visorGeo = new THREE.BoxGeometry(0.6, 0.12, 0.3);
+            const visorMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const visor = new THREE.Mesh(visorGeo, visorMat);
+            visor.position.set(0, 2.25, 0.35);
+            robotGroup.add(visor);
+
+            // Torso (Upper Chest)
+            const torsoGeo = new THREE.CylinderGeometry(0.5, 0.35, 1.2, 16);
+            const torsoMesh = new THREE.Mesh(torsoGeo, holoMaterial);
+            torsoMesh.position.y = 1.2;
+            torsoMesh.add(new THREE.Mesh(torsoGeo, wireMaterial));
+            robotGroup.add(torsoMesh);
+
+            // Arc Reactor Core (Chest light)
+            const coreGeo = new THREE.SphereGeometry(0.18, 16, 16);
+            const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+            coreMesh.position.set(0, 1.3, 0.32);
+            robotGroup.add(coreMesh);
+
+            // Shoulders & Arms
+            const armGeo = new THREE.CylinderGeometry(0.12, 0.1, 1.1, 12);
+            
+            const leftArm = new THREE.Mesh(armGeo, holoMaterial);
+            leftArm.position.set(0.7, 1.3, 0);
+            leftArm.rotation.z = -0.2;
+            leftArm.add(new THREE.Mesh(armGeo, wireMaterial));
+            robotGroup.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, holoMaterial);
+            rightArm.position.set(-0.7, 1.3, 0);
+            rightArm.rotation.z = 0.2;
+            rightArm.add(new THREE.Mesh(armGeo, wireMaterial));
+            robotGroup.add(rightArm);
+
+            // Legs
+            const legGeo = new THREE.CylinderGeometry(0.15, 0.12, 1.4, 12);
+            
+            const leftLeg = new THREE.Mesh(legGeo, holoMaterial);
+            leftLeg.position.set(0.25, -0.1, 0);
+            leftLeg.add(new THREE.Mesh(legGeo, wireMaterial));
+            robotGroup.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeo, holoMaterial);
+            rightLeg.position.set(-0.25, -0.1, 0);
+            rightLeg.add(new THREE.Mesh(legGeo, wireMaterial));
+            robotGroup.add(rightLeg);
+
+            // Circular Holographic Platform beneath robot
+            const platformGeo = new THREE.RingGeometry(1.5, 2.2, 64);
+            const platformMat = new THREE.MeshBasicMaterial({
+                color: 0xfacc15,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            holoPlatform = new THREE.Mesh(platformGeo, platformMat);
+            holoPlatform.rotation.x = Math.PI / 2;
+            holoPlatform.position.y = -0.85;
+            scene.add(holoPlatform);
+
+            // Floating holographic particles
+            const particleGeo = new THREE.BufferGeometry();
+            const particleCount = 200;
+            const posArray = new Float32Array(particleCount * 3);
+            for(let i = 0; i < particleCount * 3; i += 3) {
+                posArray[i] = (Math.random() - 0.5) * 6;
+                posArray[i+1] = Math.random() * 4 - 0.8;
+                posArray[i+2] = (Math.random() - 0.5) * 6;
+            }
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({
+                size: 0.04,
+                color: 0xfef08a,
+                transparent: true,
+                opacity: 0.7
+            });
+            particleSystem = new THREE.Points(particleGeo, particleMat);
+            scene.add(particleSystem);
+        }
+
+        // --- HAND TRACKING & GESTURE PROCESSING (MEDIAPIPE) ---
+        async function processHandTracking() {
+            if (!handLandmarker || !webcamRunning || videoElement.paused || videoElement.ended) return;
+
+            if (videoElement.currentTime !== lastVideoTime) {
+                lastVideoTime = videoElement.currentTime;
+                let startTimeMs = performance.now();
+                const results = handLandmarker.detectForVideo(videoElement, startTimeMs);
+
+                if (results.landmarks && results.landmarks.length > 0) {
+                    handDetectedStatus = true;
+                    document.getElementById('hud-hand').textContent = "DETECTED";
+                    document.getElementById('hud-hand').className = "text-emerald-400 font-bold";
+
+                    const landmarks = results.landmarks[0];
+
+                    // Landmarks: 4 = Thumb Tip, 8 = Index Tip, 0 = Wrist, 9 = Middle MCP
+                    const thumbTip = landmarks[4];
+                    const indexTip = landmarks[8];
+                    const wrist = landmarks[0];
+
+                    // 1. Pinch Distance Calculation (Thumb tip to Index tip)
+                    const dx = thumbTip.x - indexTip.x;
+                    const dy = thumbTip.y - indexTip.y;
+                    const dz = thumbTip.z - indexTip.z;
+                    const pinchDist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+                    // Map pinch distance to target camera zoom (Z)
+                    // Closer fingers -> Zoom out (larger Z); Farther fingers -> Zoom in (smaller Z)
+                    targetCameraZ = THREE.MathUtils.clamp(12 - (pinchDist - 0.15) * ZOOM_SENSITIVITY * 10, 6, 20);
+
+                    // Update HUD Zoom %
+                    const zoomPct = Math.round(((20 - targetCameraZ) / 14) * 100);
+                    document.getElementById('hud-zoom').textContent = zoomPct + '%';
+
+                    // 2. Gesture Classification (Open Palm, Closed Fist, Pinch)
+                    // Check if fingers are curled (Fist detection: tips close to wrist)
+                    const indexMCP = landmarks[5];
+                    const indexDistToWrist = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+                    const mcpDistToWrist = Math.hypot(indexMCP.x - wrist.x, indexMCP.y - wrist.y);
+
+                    if (pinchDist < 0.06) {
+                        currentGesture = "PINCH";
+                        isFrozen = false;
+                    } else if (indexDistToWrist < mcpDistToWrist * 1.2) {
+                        currentGesture = "FIST (FROZEN)";
+                        isFrozen = true;
+                    } else {
+                        currentGesture = "OPEN PALM";
+                        isFrozen = false;
+                        // 3. Hand Horizontal Movement -> Hologram Rotation
+                        // wrist.x ranges from 0 (left) to 1 (right) in normalized video coords
+                        const normalizedX = (wrist.x - 0.5) * 2; // -1 to 1
+                        targetRotationY = -normalizedX * Math.PI;
+                    }
+
+                    document.getElementById('hud-gesture').textContent = currentGesture;
+
+                } else {
+                    handDetectedStatus = false;
+                    document.getElementById('hud-hand').textContent = "SEARCHING...";
+                    document.getElementById('hud-hand').className = "text-yellow-400 font-bold";
+                    document.getElementById('hud-gesture').textContent = "NONE";
+                }
+            }
+        }
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // FPS Counter
+            frameCount++;
+            const now = performance.now();
+            if (now - fpsTimer >= 1000) {
+                document.getElementById('hud-fps').textContent = frameCount;
+                frameCount = 0;
+                fpsTimer = now;
+            }
+
+            // Run local AI hand tracking
+            processHandTracking();
+
+            // Smooth Interpolation (Lerp) for Camera Zoom & Hologram Rotation
+            currentCameraZ = THREE.MathUtils.lerp(currentCameraZ, targetCameraZ, 0.1);
+            camera.position.z = currentCameraZ;
+
+            if (robotGroup && !isFrozen) {
+                currentRotationY = THREE.MathUtils.lerp(currentRotationY, targetRotationY, 0.08);
+                robotGroup.rotation.y = currentRotationY;
+            } else if (robotGroup && isFrozen) {
+                // Subtle idle float when frozen
+                robotGroup.rotation.y += 0.002;
+            }
+
+            // Rotate platform & particles for futuristic ambiance
+            if (holoPlatform) holoPlatform.rotation.z -= 0.005;
+            if (particleSystem) particleSystem.rotation.y += 0.001;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- UI EVENT HANDLERS ---
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            targetCameraZ = 12;
+            targetRotationY = 0;
+        });
+
+        const btnToggleCam = document.getElementById('btn-toggle-cam');
+        const camPreviewBox = document.getElementById('cam-preview-box');
+        let camVisible = true;
+
+        btnToggleCam.addEventListener('click', () => {
+            camVisible = !camVisible;
+            if (camVisible) {
+                camPreviewBox.style.display = 'block';
+                btnToggleCam.textContent = "HIDE CAMERA";
+            } else {
+                camPreviewBox.style.display = 'none';
+                btnToggleCam.textContent = "SHOW CAMERA";
+            }
+        });
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
